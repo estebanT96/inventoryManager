@@ -1,42 +1,179 @@
-import {
-  Box,
-  Button,
-  Container,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Paper,
-  Typography,
-  TextField,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Pagination,
-  TableSortLabel,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  SelectChangeEvent
-} from "@mui/material";
+import React, { useState, useEffect } from 'react';
+import { Box, Button, Container, Typography, Pagination, SelectChangeEvent } from '@mui/material';
+import SearchFilters from './searchFilters';
+import ProductDialog from './productDialog';
+import InventoryTable from './InventoryTable';
+import InventoryMetrics from './inventoryMetrics';
 
-import Grid2 from "@mui/material/Grid2";
-import { useState } from "react";
-
-interface InventoryItem {
-  category: string;
+interface Product {
   name: string;
+  category: string;
+  stock: number;
   price: number;
   expiration: string;
-  stock: number;
   checked: boolean;
 }
 
-function Dashboard() {
+type SortOrder = "asc" | "desc";
+
+const Dashboard: React.FC = () => {
+  const [open, setOpen] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [editIndex, setEditIndex] = useState<number | null>(null);
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    category: "",
+    stock: "",
+    price: "",
+    expiration: ""
+  });
+  const [inventoryData, setInventoryData] = useState<Product[]>([]);
+  const [searchFilters, setSearchFilters] = useState({
+    name: "",
+    category: "",
+    availability: "",
+  });
+  const [paginatedData, setPaginatedData] = useState<Product[]>([]);
+  const [sortField, setSortField] = useState<keyof Product>("category");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    setPaginatedData(inventoryData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+  }, [inventoryData, currentPage]);
+
+  const handleOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+    setEditMode(false);
+    setEditIndex(null);
+    setNewProduct({
+      name: "",
+      category: "",
+      stock: "",
+      price: "",
+      expiration: ""
+    });
+  };
+
+  const handleSave = () => {
+    const newProductParsed = {
+      ...newProduct,
+      stock: parseInt(newProduct.stock, 10),
+      price: parseFloat(newProduct.price),
+      checked: false,
+      expiration: newProduct.category === "Food" ? newProduct.expiration : "",
+    };
+    if (editMode && editIndex !== null) {
+      setInventoryData((prevData) =>
+        prevData.map((item, index) =>
+          index === editIndex ? newProductParsed : item
+        )
+      );
+    } else {
+      setInventoryData((prevData) => [...prevData, newProductParsed]);
+    }
+    handleClose();
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewProduct((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+    const { name, value } = e.target;
+    setNewProduct((prev) => ({ ...prev, [name!]: value }));
+  };
+
+  const updateSearchFilters = (field: string, value: string) => {
+    setSearchFilters((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSearch = () => {
+    let filteredData = inventoryData;
+    if (searchFilters.name) {
+      filteredData = filteredData.filter((product) =>
+        product.name.toLowerCase().includes(searchFilters.name.toLowerCase())
+      );
+    }
+    if (searchFilters.category) {
+      filteredData = filteredData.filter(
+        (product) => product.category === searchFilters.category
+      );
+    }
+    if (searchFilters.availability) {
+      filteredData = filteredData.filter(
+        (product) =>
+          product.stock > 0 ===
+          (searchFilters.availability === "Available")
+      );
+    }
+    setPaginatedData(filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+  };
+
+  const handleClearSearch = () => {
+    setSearchFilters({ name: "", category: "", availability: "" });
+    setPaginatedData(inventoryData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+  };
+
+  const handleSort = (field: keyof Product) => {
+    if (field === sortField) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+    const sortedData = [...paginatedData].sort((a, b) => {
+      if (a[field] !== undefined && b[field] !== undefined) {
+        if (a[field] < b[field]) return sortOrder === "asc" ? -1 : 1;
+        if (a[field] > b[field]) return sortOrder === "asc" ? 1 : -1;
+      }
+      return 0;
+    });
+    setPaginatedData(sortedData);
+  };
+
+  const handlePageChange = (
+    _event: React.ChangeEvent<unknown>,
+    page: number
+  ) => {
+    setCurrentPage(page);
+    setPaginatedData(inventoryData.slice((page - 1) * itemsPerPage, page * itemsPerPage));
+  };
+
+  const handleCheckboxChange = (index: number) => {
+    setInventoryData((prevData) =>
+      prevData.map((item, i) =>
+        i === index
+          ? { ...item, checked: !item.checked, stock: !item.checked ? 0 : 10 }
+          : item
+      )
+    );
+  };
+
+  const handleEdit = (index: number) => {
+    const productToEdit = inventoryData[index];
+    setNewProduct({
+      name: productToEdit.name,
+      category: productToEdit.category,
+      stock: productToEdit.stock.toString(),
+      price: productToEdit.price.toString(),
+      expiration: productToEdit.expiration,
+    });
+    setEditMode(true);
+    setEditIndex(index);
+    setOpen(true);
+  };
+
+  const handleDelete = (index: number) => {
+    setInventoryData((prevData) => prevData.filter((_, i) => i !== index));
+  };
+
   const getRowBackground = (expiration: string | null) => {
     if (!expiration) return { color: "transparent", daysUntilExpiration: null };
     const expDate = new Date(expiration);
@@ -49,160 +186,12 @@ function Dashboard() {
     if (diffInDays > 14) return { color: "#77DD77", daysUntilExpiration: diffInDays };
     return { color: "transparent", daysUntilExpiration: null };
   };
+
   const getStockCellColor = (stock: number) => {
     if (stock < 5) return "rgba(255, 0, 0, 0.3)";
     if (stock >= 5 && stock <= 10) return "rgba(241, 154, 24, 0.65)";
     return "transparent";
   };
-
-  const [inventoryData, setInventoryData] = useState<InventoryItem[]>([
-    {
-      category: "Food",
-      name: "Watermelon",
-      price: 1.5,
-      expiration: "2025-03-07",
-      stock: 4,
-      checked: false,
-    },
-    {
-      category: "Food",
-      name: "Milk",
-      price: 1.5,
-      expiration: "2025-03-25",
-      stock: 7,
-      checked: false,
-    },
-    {
-      category: "Food",
-      name: "Egg",
-      price: 1.5,
-      expiration: "2025-03-15",
-      stock: 12,
-      checked: false,
-    },
-    {
-      category: "Food",
-      name: "Sushi",
-      price: 1.5,
-      expiration: "2025-03-07",
-      stock: 20,
-      checked: false,
-    },
-    {
-      category: "Food",
-      name: "Doritos",
-      price: 1.5,
-      expiration: "2025-03-07",
-      stock: 10,
-      checked: false,
-    },
-    {
-      category: "Electronics",
-      name: "Samsung TV",
-      price: 900,
-      expiration: "",
-      stock: 10,
-      checked: false,
-    },
-    {
-      category: "Clothing",
-      name: "Jeans",
-      price: 60,
-      expiration: "",
-      stock: 10,
-      checked: false,
-    },
-  ]);
-
-  const handleSort = (field: keyof InventoryItem) => {
-    const isAsc = sortField === field && sortOrder === "asc";
-    setSortOrder(isAsc ? "desc" : "asc");
-    setSortField(field);
-    setInventoryData((prevData) =>
-      [...prevData].sort((a, b) =>
-        isAsc
-          ? typeof a[field] === "number"
-            ? (a[field] as number) - (b[field] as number)
-            : String(a[field]).localeCompare(String(b[field]))
-          : typeof a[field] === "number"
-          ? (b[field] as number) - (a[field] as number)
-          : String(b[field]).localeCompare(String(a[field]))
-      )
-    );
-  };
-
-  const handleCheckboxChange = (index: number) => {
-    const actualIndex = (currentPage - 1) * itemsPerPage + index;
-    setInventoryData((prevData) =>
-      prevData.map((item, i) =>
-        i === actualIndex
-          ? { ...item, checked: !item.checked, stock: !item.checked ? 0 : 10 }
-          : item
-      )
-    );
-  };
-
-  const [sortField, setSortField] = useState<keyof InventoryItem>("category");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
-
-  const [searchFilters, setSearchFilters] = useState({
-    name: "",
-    category: "",
-    availability: "",
-  });
-
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("");
-  const [selectedAvailability, setselectedAvailability] = useState("");
-
-  const handleSearch = () => {
-    setSearchTerm(searchFilters.name);
-    setSelectedCategory(searchFilters.category);
-    setselectedAvailability(searchFilters.availability);
-    setCurrentPage(1);
-  };
-
-  const handleClearSearch = () => {
-    setSearchFilters({
-      name: "",
-      category: "",
-      availability: "",
-    });
-    setSearchTerm("");
-    setSelectedCategory("");
-    setselectedAvailability("");
-    setCurrentPage(1);
-  };
-
-  const updateSearchFilters = (field: string, value: string) => {
-    setSearchFilters((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handlePageChange = (
-    _event: React.ChangeEvent<unknown>,
-    page: number
-  ) => {
-    setCurrentPage(page);
-  };
-
-  const filteredData = inventoryData.filter((item) => {
-    return (
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-      (selectedCategory ? item.category === selectedCategory : true) &&
-      (selectedAvailability
-        ? selectedAvailability === "Available"
-          ? item.stock > 0
-          : item.stock === 0
-        : true)
-    );
-  });
-
-  const paginatedData = filteredData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   const calculateMetrics = () => {
     const categories = ["Food", "Clothing", "Electronics", "Overall"];
@@ -231,33 +220,6 @@ function Dashboard() {
     });
   };
 
-  const [open, setOpen] = useState(false);
-  const [newProduct, setNewProduct] = useState({
-    name: "",
-    category: "",
-    stock: 0,
-    price: 0,
-    expiration: ""
-  });
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewProduct((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
-      const { name, value } = e.target;
-      setNewProduct((prev) => ({ ...prev, [name!]: value }));
-    };
-
-  const handleSave = () => {
-    setInventoryData((prevData) => [...prevData, { ...newProduct, checked: false }]);
-    handleClose();
-  };
-
   return (
     <Box
       sx={{
@@ -281,293 +243,49 @@ function Dashboard() {
           minHeight: "80vh",
         }}
       >
-<Typography
-  variant="h4"
-  color="black"
-  sx={{ mt: 2, mb: 4, fontWeight: "600", textDecoration: "underline" }} // Added mb: 4 for margin-bottom
->
-  Inventory Dashboard
-</Typography>
+        <Typography
+          variant="h4"
+          color="black"
+          sx={{ mt: 2, mb: 4, fontWeight: "600", textDecoration: "underline" }}
+        >
+          Inventory Dashboard
+        </Typography>
 
-        <Box component="form" sx={{ mb: 4 }}>
-        <Grid2 container spacing={2} alignItems="center">
-
-<Grid2 size={{ xs: 12, sm: 3 }}>
-  <TextField
-    label="Search Product"
-    variant="outlined"
-    fullWidth
-    value={searchFilters.name}
-    onChange={(e) => updateSearchFilters("name", e.target.value)}
-    sx={{ height: "56px" }} // Match the height of the search button
-  />
-</Grid2>
-
-<Grid2 size={{ xs: 12, sm: 3 }}>
-  <FormControl variant="outlined" fullWidth sx={{ height: "56px" }}>
-    <InputLabel>Category</InputLabel>
-    <Select
-      value={searchFilters.category}
-      onChange={(e) => updateSearchFilters("category", e.target.value)}
-      label="Category"
-    >
-      <MenuItem value="">
-        <em>None</em>
-      </MenuItem>
-      <MenuItem value="Food">Food</MenuItem>
-      <MenuItem value="Electronics">Electronics</MenuItem>
-      <MenuItem value="Clothing">Clothing</MenuItem>
-    </Select>
-  </FormControl>
-</Grid2>
-
-<Grid2 size={{ xs: 12, sm: 3 }}>
-  <FormControl variant="outlined" fullWidth sx={{ height: "56px" }}>
-    <InputLabel>Availability</InputLabel>
-    <Select
-      value={searchFilters.availability}
-      onChange={(e) => updateSearchFilters("availability", e.target.value)}
-      label="Availability"
-    >
-      <MenuItem value="">
-        <em>None</em>
-      </MenuItem>
-      <MenuItem value="Available">Available</MenuItem>
-      <MenuItem value="Out of Stock">Out of Stock</MenuItem>
-    </Select>
-  </FormControl>
-</Grid2>
-
-<Grid2 size={{ xs: 12, sm: 2 }}>
-  <Button
-    variant="contained"
-    color="primary"
-    fullWidth
-    sx={{ fontWeight: "bold", height: "56px" }} // Ensure consistent height
-    onClick={handleSearch}
-  >
-    Search
-  </Button>
-</Grid2>
-
-<Grid2 size={{ xs: 12, sm: 1 }}>
-  <Button
-    variant="contained"
-    color="secondary"
-    fullWidth
-    sx={{ fontWeight: "bold", height: "56px" }} // Ensure consistent height
-    onClick={handleClearSearch}
-  >
-    Clear
-  </Button>
-</Grid2>
-        </Grid2>
-        </Box>
+        <SearchFilters
+          searchFilters={searchFilters}
+          updateSearchFilters={updateSearchFilters}
+          handleSearch={handleSearch}
+          handleClearSearch={handleClearSearch}
+        />
 
         <Button
           variant="contained"
           sx={{ mb: 2, backgroundColor: "green", fontWeight: "bold" }}
-        onClick={handleOpen}
+          onClick={handleOpen}
         >
           New Product
         </Button>
 
+        <ProductDialog
+          open={open}
+          handleClose={handleClose}
+          handleSave={handleSave}
+          newProduct={newProduct}
+          handleInputChange={handleInputChange}
+          handleSelectChange={handleSelectChange}
+        />
 
-        <Dialog open={open} onClose={handleClose}>
-  <DialogTitle>Add New Product</DialogTitle>
-  <DialogContent>
-    <TextField
-      label="Product Name"
-      autoFocus
-      margin="dense"
-      name="name"
-      onChange={handleInputChange}
-      type="text"
-      fullWidth
-      variant="outlined"
-      value={newProduct.name}
-    />
-    <FormControl fullWidth variant="outlined" margin="dense">
-      <InputLabel>Category</InputLabel>
-      <Select
-        name="category"
-        value={newProduct.category}
-        onChange={handleSelectChange}
-        label="Category"
-      >
-        <MenuItem value="">
-          <em>None</em>
-        </MenuItem>
-        <MenuItem value="Food">Food</MenuItem>
-        <MenuItem value="Electronics">Electronics</MenuItem>
-        <MenuItem value="Clothing">Clothing</MenuItem>
-      </Select>
-    </FormControl>
-    <TextField
-      margin="dense"
-      name="stock"
-      label="Stock"
-      type="number"
-      fullWidth
-      variant="outlined"
-      value={newProduct.stock}
-      onChange={handleInputChange}
-    />
-    <TextField
-      margin="dense"
-      name="price"
-      label="Unit Price"
-      type="number"
-      fullWidth
-      variant="outlined"
-      value={newProduct.price}
-      onChange={handleInputChange}
-    />
-    <TextField
-      margin="dense"
-      name="expiration"
-      label="Expiration Date"
-      type="date"
-      fullWidth
-      variant="outlined"
-      value={newProduct.expiration}
-      onChange={handleInputChange}
-    />
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={handleSave} color="primary">
-        Save
-      </Button>
-    </DialogActions>
-</Dialog>
-
-
-        {/* Table */}
-        <TableContainer component={Paper} sx={{ mt: 4, mb: 4 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>✔</TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "category"}
-                    direction={sortOrder}
-                    onClick={() => handleSort("category")}
-                  >
-                    Category
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "name"}
-                    direction={sortOrder}
-                    onClick={() => handleSort("name")}
-                  >
-                    Name
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "price"}
-                    direction={sortOrder}
-                    onClick={() => handleSort("price")}
-                  >
-                    Price
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "expiration"}
-                    direction={sortOrder}
-                    onClick={() => handleSort("expiration")}
-                  >
-                    Expiration Date
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>
-                  <TableSortLabel
-                    active={sortField === "stock"}
-                    direction={sortOrder}
-                    onClick={() => handleSort("stock")}
-                  >
-                    Stock
-                  </TableSortLabel>
-                </TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-  {paginatedData.map((item, index) => {
-    const { color, daysUntilExpiration } = getRowBackground(item.expiration);
-    return (
-      <TableRow
-        key={index}
-        sx={{ textDecoration: item.stock === 0 ? "line-through" : "none" }}
-      >
-        <TableCell>
-          <input
-            type="checkbox"
-            checked={item.checked}
-            onChange={() => handleCheckboxChange(index)}
-          />
-        </TableCell>
-        <TableCell sx={{ backgroundColor: color }}>
-          {item.category}
-        </TableCell>
-        <TableCell sx={{ backgroundColor: color }}>
-          {item.name}
-        </TableCell>
-        <TableCell sx={{ backgroundColor: color }}>
-          ${Number(item.price).toFixed(2)}
-        </TableCell>
-        <TableCell sx={{ backgroundColor: color }}>
-          {item.expiration || "-"}
-          {daysUntilExpiration !== null && daysUntilExpiration >= 7 && daysUntilExpiration <= 14 && (
-            <Typography variant="caption" color="error">
-              {` (expiring in ${daysUntilExpiration} days)`}
-            </Typography>
-          )}
-        </TableCell>
-        <TableCell
-          sx={{
-            backgroundColor: getStockCellColor(item.stock),
-            fontWeight: "bold",
-            borderLeft: "0.5px solid black",
-            borderRight: "0.5px solid black",
-          }}
-        >
-          {item.stock}
-        </TableCell>
-        <TableCell>
-          <Button
-            variant="contained"
-            color="primary"
-            size="small"
-            sx={{ mr: 1, fontWeight: "bold" }}
-          >
-            Edit
-          </Button>
-          <Button
-            variant="contained"
-            sx={{
-              backgroundColor: "#e85831",
-              "&:hover": {
-                backgroundColor: "#d64b24",
-              },
-              fontWeight: "bold",
-            }}
-            size="small"
-          >
-            Delete
-          </Button>
-        </TableCell>
-      </TableRow>
-    );
-  })}
-</TableBody>
-          </Table>
-        </TableContainer>
+        <InventoryTable
+          paginatedData={paginatedData}
+          sortField={sortField}
+          sortOrder={sortOrder}
+          handleSort={handleSort}
+          handleCheckboxChange={handleCheckboxChange}
+          handleEdit={handleEdit}
+          handleDelete={handleDelete}
+          getRowBackground={getRowBackground}
+          getStockCellColor={getStockCellColor}
+        />
 
         <Box
           sx={{
@@ -583,84 +301,10 @@ function Dashboard() {
           />
         </Box>
 
-        <Box
-          component={Paper}
-          sx={{ mt: 2, mb: 2, p: 3, bgcolor: "#f9f9f9", borderRadius: 2 }}
-        >
-          <Typography
-            variant="h6"
-            sx={{
-              color: "black",
-              fontWeight: "bold",
-              textDecoration: "underline",
-            }}
-          >
-            Inventory Metrics
-          </Typography>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: "bold" }}>Category</TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Total Products in Stock
-                </TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Total Value in Stock
-                </TableCell>
-                <TableCell sx={{ fontWeight: "bold" }}>
-                  Average Price in Stock
-                </TableCell>
-              </TableRow>
-            </TableHead>
-
-            <TableBody>
-              {calculateMetrics().map(
-                ({ category, totalStock, totalValue, avgPrice }) => (
-                  <TableRow
-                    key={category}
-                    sx={{
-                      borderTop:
-                        category === "Overall" ? "1.5px solid gray" : "none",
-                      fontWeight: category === "Overall" ? "bold" : "normal",
-                    }}
-                  >
-                    <TableCell
-                      sx={{
-                        fontWeight: category === "Overall" ? "bold" : "normal",
-                      }}
-                    >
-                      {category}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: category === "Overall" ? "bold" : "normal",
-                      }}
-                    >
-                      {totalStock}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: category === "Overall" ? "bold" : "normal",
-                      }}
-                    >
-                      ${totalValue.toFixed(2)}
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: category === "Overall" ? "bold" : "normal",
-                      }}
-                    >
-                      ${avgPrice.toFixed(2)}
-                    </TableCell>
-                  </TableRow>
-                )
-              )}
-            </TableBody>
-          </Table>
-        </Box>
+        <InventoryMetrics calculateMetrics={calculateMetrics} />
       </Container>
     </Box>
   );
-}
+};
 
 export default Dashboard;
