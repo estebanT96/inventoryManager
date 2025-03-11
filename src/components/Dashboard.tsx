@@ -6,6 +6,7 @@ import InventoryTable from './InventoryTable';
 import InventoryMetrics from './inventoryMetrics';
 
 interface Product {
+  id: number;
   name: string;
   category: string;
   stock: number;
@@ -21,6 +22,7 @@ const Dashboard: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [newProduct, setNewProduct] = useState({
+    id: Date.now(),
     name: "",
     category: "",
     stock: "",
@@ -40,8 +42,42 @@ const Dashboard: React.FC = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    setPaginatedData(inventoryData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
-  }, [inventoryData, currentPage]);
+    applySortingAndPagination();
+  }, [inventoryData, currentPage, sortField, sortOrder, searchFilters]);
+
+  const applySortingAndPagination = () => {
+    let filteredData = inventoryData;
+    if (searchFilters.name) {
+      filteredData = filteredData.filter((product) =>
+        product.name.toLowerCase().includes(searchFilters.name.toLowerCase())
+      );
+    }
+    if (searchFilters.category) {
+      filteredData = filteredData.filter((product) =>
+        product.category === searchFilters.category
+      );
+    }
+    if (searchFilters.availability) {
+      filteredData = filteredData.filter(
+        (product) =>
+          product.stock > 0 ===
+          (searchFilters.availability === "Available")
+      );
+    }
+
+    const sortedData = [...filteredData].sort((a, b) => {
+      if (typeof a[sortField] === 'string' && typeof b[sortField] === 'string') {
+        if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
+        if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
+      } else if (typeof a[sortField] === 'number' && typeof b[sortField] === 'number') {
+        return sortOrder === "asc" ? a[sortField] - b[sortField] : b[sortField] - a[sortField];
+      }
+
+      return 0;
+    });
+
+    setPaginatedData(sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+  };
 
   const handleOpen = () => {
     setOpen(true);
@@ -52,6 +88,7 @@ const Dashboard: React.FC = () => {
     setEditMode(false);
     setEditIndex(null);
     setNewProduct({
+      id: Date.now(),
       name: "",
       category: "",
       stock: "",
@@ -63,6 +100,7 @@ const Dashboard: React.FC = () => {
   const handleSave = () => {
     const newProductParsed = {
       ...newProduct,
+      id: Date.now(), // Ensure a unique id is generated for each new product
       stock: parseInt(newProduct.stock, 10),
       price: parseFloat(newProduct.price),
       checked: false,
@@ -70,8 +108,8 @@ const Dashboard: React.FC = () => {
     };
     if (editMode && editIndex !== null) {
       setInventoryData((prevData) =>
-        prevData.map((item, index) =>
-          index === editIndex ? newProductParsed : item
+        prevData.map((item) =>
+          item.id === editIndex ? newProductParsed : item
         )
       );
     } else {
@@ -90,35 +128,19 @@ const Dashboard: React.FC = () => {
     setNewProduct((prev) => ({ ...prev, [name!]: value }));
   };
 
-  const updateSearchFilters = (field: string, value: string) => {
+  const updateSearchFilters = (field: string, value: string | string[]) => {
     setSearchFilters((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleSearch = () => {
-    let filteredData = inventoryData;
-    if (searchFilters.name) {
-      filteredData = filteredData.filter((product) =>
-        product.name.toLowerCase().includes(searchFilters.name.toLowerCase())
-      );
-    }
-    if (searchFilters.category) {
-      filteredData = filteredData.filter(
-        (product) => product.category === searchFilters.category
-      );
-    }
-    if (searchFilters.availability) {
-      filteredData = filteredData.filter(
-        (product) =>
-          product.stock > 0 ===
-          (searchFilters.availability === "Available")
-      );
-    }
-    setPaginatedData(filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+    setCurrentPage(1);
+    applySortingAndPagination();
   };
 
   const handleClearSearch = () => {
     setSearchFilters({ name: "", category: "", availability: "" });
-    setPaginatedData(inventoryData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+    setCurrentPage(1);
+    applySortingAndPagination();
   };
 
   const handleSort = (field: keyof Product) => {
@@ -128,14 +150,7 @@ const Dashboard: React.FC = () => {
       setSortField(field);
       setSortOrder("asc");
     }
-    const sortedData = [...paginatedData].sort((a, b) => {
-      if (a[field] !== undefined && b[field] !== undefined) {
-        if (a[field] < b[field]) return sortOrder === "asc" ? -1 : 1;
-        if (a[field] > b[field]) return sortOrder === "asc" ? 1 : -1;
-      }
-      return 0;
-    });
-    setPaginatedData(sortedData);
+    applySortingAndPagination();
   };
 
   const handlePageChange = (
@@ -143,35 +158,39 @@ const Dashboard: React.FC = () => {
     page: number
   ) => {
     setCurrentPage(page);
-    setPaginatedData(inventoryData.slice((page - 1) * itemsPerPage, page * itemsPerPage));
+    applySortingAndPagination();
   };
 
-  const handleCheckboxChange = (index: number) => {
+  const handleCheckboxChange = (id: number) => {
     setInventoryData((prevData) =>
-      prevData.map((item, i) =>
-        i === index
-          ? { ...item, checked: !item.checked, stock: !item.checked ? 0 : 10 }
+      prevData.map((item) =>
+        item.id === id
+          ? { ...item, checked: !item.checked, stock: item.checked ? 10 : 0 }
           : item
       )
     );
   };
 
-  const handleEdit = (index: number) => {
-    const productToEdit = inventoryData[index];
-    setNewProduct({
-      name: productToEdit.name,
-      category: productToEdit.category,
-      stock: productToEdit.stock.toString(),
-      price: productToEdit.price.toString(),
-      expiration: productToEdit.expiration,
-    });
-    setEditMode(true);
-    setEditIndex(index);
-    setOpen(true);
+  const handleEdit = (id: number) => {
+    const productToEdit = inventoryData.find(item => item.id === id);
+    if (productToEdit) {
+      setNewProduct({
+        id: productToEdit.id,
+        name: productToEdit.name,
+        category: productToEdit.category,
+        stock: productToEdit.stock.toString(),
+        price: productToEdit.price.toString(),
+        expiration: productToEdit.expiration,
+      });
+      setEditMode(true);
+      setEditIndex(id);
+      setOpen(true);
+    }
   };
 
-  const handleDelete = (index: number) => {
-    setInventoryData((prevData) => prevData.filter((_, i) => i !== index));
+  const handleDelete = (id: number) => {
+    setInventoryData((prevData) => prevData.filter((item) => item.id !== id));
+    applySortingAndPagination();
   };
 
   const getRowBackground = (expiration: string | null) => {

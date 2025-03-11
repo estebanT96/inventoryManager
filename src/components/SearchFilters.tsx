@@ -1,15 +1,20 @@
 import React from 'react';
-import { Box, Button, FormControl, InputLabel, MenuItem, Select, TextField } from '@mui/material';
+import { Box, Button, FormControl, InputLabel, MenuItem, Select, TextField, SelectChangeEvent } from '@mui/material';
 import Grid2 from '@mui/material/Grid2';
 
 interface SearchFiltersProps {
   searchFilters: { name: string; category: string; availability: string };
-  updateSearchFilters: (field: string, value: string) => void;
+  updateSearchFilters: (field: string, value: string | string[]) => void;
   handleSearch: () => void;
   handleClearSearch: () => void;
 }
 
 const SearchFilters: React.FC<SearchFiltersProps> = ({ searchFilters, updateSearchFilters, handleSearch, handleClearSearch }) => {
+  const handleCategoryChange = (event: SelectChangeEvent<string>) => {
+    const { value } = event.target;
+    updateSearchFilters("category", value);
+  };
+
   return (
     <Box component="form" sx={{ mb: 4 }}>
       <Grid2 container spacing={2} alignItems="center">
@@ -28,8 +33,20 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ searchFilters, updateSear
             <InputLabel>Category</InputLabel>
             <Select
               value={searchFilters.category}
-              onChange={(e) => updateSearchFilters("category", e.target.value)}
+              onChange={handleCategoryChange}
               label="Category"
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    '& .Mui-selected': {
+                      backgroundColor: 'rgba(0, 0, 255, 0.1)', // Light blue background for selected items
+                      '&:hover': {
+                        backgroundColor: 'rgba(0, 0, 255, 0.2)', // Darker blue background on hover
+                      },
+                    },
+                  },
+                },
+              }}
             >
               <MenuItem value="">
                 <em>None</em>
