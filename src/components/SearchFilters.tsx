@@ -20,12 +20,12 @@ const SearchFilters: React.FC<SearchFiltersProps> = ({ searchFilters, updateSear
       <Grid2 container spacing={2} alignItems="center">
         <Grid2 size={{ xs: 12, sm: 3 }}>
           <TextField
-            label="Search Product"
+            label="Enter Product Name..."
             variant="outlined"
             fullWidth
             value={searchFilters.name}
             onChange={(e) => updateSearchFilters("name", e.target.value)}
-            sx={{ height: "56px" }}
+            sx={{ height: "56px", fontStyle: "italic"}}
           />
         </Grid2>
         <Grid2 size={{ xs: 12, sm: 3 }}>

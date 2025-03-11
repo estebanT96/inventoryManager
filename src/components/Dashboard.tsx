@@ -53,6 +53,7 @@ const Dashboard: React.FC = () => {
     keyof Product | ""
   >("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -96,12 +97,17 @@ const Dashboard: React.FC = () => {
       return 0;
     });
 
-    setPaginatedData(
-      sortedData.slice(
-        (currentPage - 1) * itemsPerPage,
-        currentPage * itemsPerPage
-      )
-    );
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedData = sortedData.slice(startIndex, endIndex);
+
+    setPaginatedData(paginatedData);
+    setTotalPages(Math.ceil(filteredData.length / itemsPerPage));
+
+    // Ensure the current page is within the valid range
+    if (currentPage > Math.ceil(filteredData.length / itemsPerPage)) {
+      setCurrentPage(1);
+    }
   };
 
   const handleOpen = () => {
@@ -165,7 +171,7 @@ const Dashboard: React.FC = () => {
   const handleClearSearch = () => {
     setSearchFilters({ name: "", category: "", availability: "" });
     setCurrentPage(1);
-    setPaginatedData(inventoryData.slice(0, itemsPerPage));
+    applySortingAndPagination();
   };
 
   const handlePageChange = (
@@ -261,19 +267,16 @@ const Dashboard: React.FC = () => {
     event: SelectChangeEvent<keyof Product | "">
   ) => {
     setPrimarySortField(event.target.value as keyof Product);
-    applySortingAndPagination();
   };
 
   const handleSecondarySortChange = (
     event: SelectChangeEvent<keyof Product | "">
   ) => {
     setSecondarySortField(event.target.value as keyof Product);
-    applySortingAndPagination();
   };
 
   const handleSortOrderChange = (event: SelectChangeEvent<SortOrder>) => {
     setSortOrder(event.target.value as SortOrder);
-    applySortingAndPagination();
   };
 
   return (
@@ -431,7 +434,7 @@ const Dashboard: React.FC = () => {
           }}
         >
           <Pagination
-            count={Math.ceil(inventoryData.length / itemsPerPage)}
+            count={totalPages}
             page={currentPage}
             onChange={handlePageChange}
             color="primary"
