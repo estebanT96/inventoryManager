@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, Container, Typography, Pagination, SelectChangeEvent } from '@mui/material';
-import SearchFilters from './searchFilters';
-import ProductDialog from './productDialog';
+import SearchFilters from './SearchFilters';
+import ProductDialog from './ProductDialog';
 import InventoryTable from './InventoryTable';
-import InventoryMetrics from './inventoryMetrics';
+import InventoryMetrics from './InventoryMetrics';
 
 interface Product {
   id: number;
@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
 
   useEffect(() => {
     applySortingAndPagination();
-  }, [inventoryData, currentPage, sortField, sortOrder, searchFilters]);
+  }, [inventoryData, currentPage, sortField, sortOrder]);
 
   const applySortingAndPagination = () => {
     let filteredData = inventoryData;
@@ -140,7 +140,7 @@ const Dashboard: React.FC = () => {
   const handleClearSearch = () => {
     setSearchFilters({ name: "", category: "", availability: "" });
     setCurrentPage(1);
-    applySortingAndPagination();
+    setPaginatedData(inventoryData.slice(0, itemsPerPage));
   };
 
   const handleSort = (field: keyof Product) => {
