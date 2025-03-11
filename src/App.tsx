@@ -7,7 +7,6 @@ function App () {
     sx = {{
       display: "flex",
       justifyContent: "center",
-      height: "100vh",
       width: "100vw",
       bgcolor: "f5f5f5"
     }}
