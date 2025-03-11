@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Typography, Pagination, Select, MenuItem, SelectChangeEvent } from '@mui/material';
-import SearchFilters from './SearchFilters';
-import ProductDialog from './ProductDialog';
-import InventoryTable from './InventoryTable';
-import InventoryMetrics from './InventoryMetrics';
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Button,
+  Container,
+  Typography,
+  Pagination,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
+} from "@mui/material";
+import SearchFilters from "./SearchFilters";
+import ProductDialog from "./ProductDialog";
+import InventoryTable from "./InventoryTable";
+import InventoryMetrics from "./InventoryMetrics";
 
 interface Product {
   id: number;
@@ -27,7 +36,7 @@ const Dashboard: React.FC = () => {
     category: "",
     stock: "",
     price: "",
-    expiration: ""
+    expiration: "",
   });
   const [inventoryData, setInventoryData] = useState<Product[]>([]);
   const [searchFilters, setSearchFilters] = useState({
@@ -37,14 +46,24 @@ const Dashboard: React.FC = () => {
   });
   const [paginatedData, setPaginatedData] = useState<Product[]>([]);
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
-  const [primarySortField, setPrimarySortField] = useState<keyof Product | "">("");
-  const [secondarySortField, setSecondarySortField] = useState<keyof Product | "">("");
+  const [primarySortField, setPrimarySortField] = useState<keyof Product | "">(
+    ""
+  );
+  const [secondarySortField, setSecondarySortField] = useState<
+    keyof Product | ""
+  >("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     applySortingAndPagination();
-  }, [inventoryData, currentPage, primarySortField, secondarySortField, sortOrder]);
+  }, [
+    inventoryData,
+    currentPage,
+    primarySortField,
+    secondarySortField,
+    sortOrder,
+  ]);
 
   const applySortingAndPagination = () => {
     let filteredData = inventoryData;
@@ -54,27 +73,35 @@ const Dashboard: React.FC = () => {
       );
     }
     if (searchFilters.category) {
-      filteredData = filteredData.filter((product) =>
-        product.category === searchFilters.category
+      filteredData = filteredData.filter(
+        (product) => product.category === searchFilters.category
       );
     }
     if (searchFilters.availability) {
       filteredData = filteredData.filter(
         (product) =>
-          product.stock > 0 ===
-          (searchFilters.availability === "Available")
+          product.stock > 0 === (searchFilters.availability === "Available")
       );
     }
 
     const sortedData = [...filteredData].sort((a, b) => {
-      if (primarySortField && a[primarySortField] < b[primarySortField]) return sortOrder === "asc" ? -1 : 1;
-      if (primarySortField && a[primarySortField] > b[primarySortField]) return sortOrder === "asc" ? 1 : -1;
-      if (secondarySortField && a[secondarySortField] < b[secondarySortField]) return sortOrder === "asc" ? -1 : 1;
-      if (secondarySortField && a[secondarySortField] > b[secondarySortField]) return sortOrder === "asc" ? 1 : -1;
+      if (primarySortField && a[primarySortField] < b[primarySortField])
+        return sortOrder === "asc" ? -1 : 1;
+      if (primarySortField && a[primarySortField] > b[primarySortField])
+        return sortOrder === "asc" ? 1 : -1;
+      if (secondarySortField && a[secondarySortField] < b[secondarySortField])
+        return sortOrder === "asc" ? -1 : 1;
+      if (secondarySortField && a[secondarySortField] > b[secondarySortField])
+        return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
-    setPaginatedData(sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage));
+    setPaginatedData(
+      sortedData.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      )
+    );
   };
 
   const handleOpen = () => {
@@ -91,28 +118,28 @@ const Dashboard: React.FC = () => {
       category: "",
       stock: "",
       price: "",
-      expiration: ""
+      expiration: "",
     });
   };
 
   const handleSave = () => {
     const newProductParsed = {
       ...newProduct,
-      id: Date.now(), // Ensure a unique id is generated for each new product
+      id: Date.now(),
       stock: parseInt(newProduct.stock, 10),
       price: parseFloat(newProduct.price),
       checked: false,
       expiration: newProduct.category === "Food" ? newProduct.expiration : "",
     };
+
     if (editMode && editIndex !== null) {
       setInventoryData((prevData) =>
-        prevData.map((item) =>
-          item.id === editIndex ? newProductParsed : item
-        )
+        prevData.map((item) => (item.id === editIndex ? newProductParsed : item))
       );
     } else {
       setInventoryData((prevData) => [...prevData, newProductParsed]);
     }
+
     handleClose();
   };
 
@@ -160,7 +187,7 @@ const Dashboard: React.FC = () => {
   };
 
   const handleEdit = (id: number) => {
-    const productToEdit = inventoryData.find(item => item.id === id);
+    const productToEdit = inventoryData.find((item) => item.id === id);
     if (productToEdit) {
       setNewProduct({
         id: productToEdit.id,
@@ -188,9 +215,12 @@ const Dashboard: React.FC = () => {
     const diffInDays = Math.floor(
       (expDate.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24)
     );
-    if (diffInDays < 7) return { color: "#FF6961", daysUntilExpiration: diffInDays };
-    if (diffInDays >= 7 && diffInDays <= 14) return { color: "#FFFB29", daysUntilExpiration: diffInDays };
-    if (diffInDays > 14) return { color: "#77DD77", daysUntilExpiration: diffInDays };
+    if (diffInDays < 7)
+      return { color: "#FF6961", daysUntilExpiration: diffInDays };
+    if (diffInDays >= 7 && diffInDays <= 14)
+      return { color: "#FFFB29", daysUntilExpiration: diffInDays };
+    if (diffInDays > 14)
+      return { color: "#77DD77", daysUntilExpiration: diffInDays };
     return { color: "transparent", daysUntilExpiration: null };
   };
 
@@ -227,12 +257,16 @@ const Dashboard: React.FC = () => {
     });
   };
 
-  const handlePrimarySortChange = (event: SelectChangeEvent<keyof Product | "">) => {
+  const handlePrimarySortChange = (
+    event: SelectChangeEvent<keyof Product | "">
+  ) => {
     setPrimarySortField(event.target.value as keyof Product);
     applySortingAndPagination();
   };
 
-  const handleSecondarySortChange = (event: SelectChangeEvent<keyof Product | "">) => {
+  const handleSecondarySortChange = (
+    event: SelectChangeEvent<keyof Product | "">
+  ) => {
     setSecondarySortField(event.target.value as keyof Product);
     applySortingAndPagination();
   };
@@ -251,8 +285,8 @@ const Dashboard: React.FC = () => {
         minHeight: "100vh",
         width: "100vw",
         bgcolor: "#f5f5f5",
-        overflowY: "auto",
-        marginTop: "20px",
+        overflowY: "auto", // Enable scrolling in the main area
+        position: "relative",
       }}
     >
       <Container
@@ -273,7 +307,16 @@ const Dashboard: React.FC = () => {
           Inventory Dashboard
         </Typography>
 
-        <Box sx={{ position: 'sticky', top: 0, zIndex: 1, bgcolor: '#fff', pb: 1, borderBottom: '1px solid #ccc' }}>
+        <Box
+          sx={{
+            position: "sticky",
+            top: 0,
+            zIndex: 1,
+            bgcolor: "#fff",
+            pb: 1,
+            borderBottom: "1px solid #ccc",
+          }}
+        >
           <SearchFilters
             searchFilters={searchFilters}
             updateSearchFilters={updateSearchFilters}
@@ -281,41 +324,67 @@ const Dashboard: React.FC = () => {
             handleClearSearch={handleClearSearch}
           />
 
-          <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center', mb: 1 }}>
-            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>Sort By:</Typography>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "start",
+              alignItems: "center",
+              mb: 1,
+            }}
+          >
+            <Typography
+              variant="subtitle2"
+              sx={{ mr: 2, color: "text.secondary" }}
+            >
+              Sort By:
+            </Typography>
             <Select
               value={primarySortField}
               onChange={handlePrimarySortChange}
               displayEmpty
-              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ mr: 3, color: "text.secondary", fontSize: "0.875rem" }}
             >
-              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
               <MenuItem value="category">Category</MenuItem>
               <MenuItem value="name">Name</MenuItem>
               <MenuItem value="price">Price</MenuItem>
               <MenuItem value="expiration">Expiration Date</MenuItem>
               <MenuItem value="stock">Stock</MenuItem>
             </Select>
-            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>And:</Typography>
+            <Typography
+              variant="subtitle2"
+              sx={{ mr: 2, color: "text.secondary" }}
+            >
+              And:
+            </Typography>
             <Select
               value={secondarySortField}
               onChange={handleSecondarySortChange}
               displayEmpty
-              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ mr: 3, color: "text.secondary", fontSize: "0.875rem" }}
             >
-              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
               <MenuItem value="category">Category</MenuItem>
               <MenuItem value="name">Name</MenuItem>
               <MenuItem value="price">Price</MenuItem>
               <MenuItem value="expiration">Expiration Date</MenuItem>
               <MenuItem value="stock">Stock</MenuItem>
             </Select>
-            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>Order:</Typography>
+            <Typography
+              variant="subtitle2"
+              sx={{ mr: 2, color: "text.secondary" }}
+            >
+              Order:
+            </Typography>
             <Select
               value={sortOrder}
               onChange={handleSortOrderChange}
               displayEmpty
-              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+              sx={{ mr: 3, color: "text.secondary", fontSize: "0.875rem" }}
             >
               <MenuItem value="asc">Ascending</MenuItem>
               <MenuItem value="desc">Descending</MenuItem>
@@ -324,7 +393,12 @@ const Dashboard: React.FC = () => {
 
           <Button
             variant="contained"
-            sx={{ mb: 1, backgroundColor: "green", fontWeight: "bold", fontSize: '0.875rem' }}
+            sx={{
+              mb: 1,
+              backgroundColor: "green",
+              fontWeight: "bold",
+              fontSize: "0.875rem",
+            }}
             onClick={handleOpen}
           >
             New Product
