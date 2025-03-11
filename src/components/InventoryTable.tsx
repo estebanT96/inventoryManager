@@ -15,9 +15,7 @@ type SortOrder = "asc" | "desc";
 
 interface InventoryTableProps {
   paginatedData: Product[];
-  sortField: keyof Product;
   sortOrder: SortOrder;
-  handleSort: (field: keyof Product) => void;
   handleCheckboxChange: (id: number) => void; // Change to use the unique identifier
   handleEdit: (id: number) => void; // Change to use the unique identifier
   handleDelete: (id: number) => void; // Change to use the unique identifier
@@ -25,7 +23,7 @@ interface InventoryTableProps {
   getStockCellColor: (stock: number) => string;
 }
 
-const InventoryTable: React.FC<InventoryTableProps> = ({ paginatedData, sortField, sortOrder, handleSort, handleCheckboxChange, handleEdit, handleDelete, getRowBackground, getStockCellColor }) => {
+const InventoryTable: React.FC<InventoryTableProps> = ({ paginatedData, sortOrder, handleCheckboxChange, handleEdit, handleDelete, getRowBackground, getStockCellColor }) => {
   const [open, setOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
@@ -59,45 +57,40 @@ const InventoryTable: React.FC<InventoryTableProps> = ({ paginatedData, sortFiel
               <TableCell>✔</TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={sortField === "category"}
+                  active={false}
                   direction={sortOrder}
-                  onClick={() => handleSort("category")}
                 >
                   Category
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={sortField === "name"}
+                  active={false}
                   direction={sortOrder}
-                  onClick={() => handleSort("name")}
                 >
                   Name
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={sortField === "price"}
+                  active={false}
                   direction={sortOrder}
-                  onClick={() => handleSort("price")}
                 >
                   Price
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={sortField === "expiration"}
+                  active={false}
                   direction={sortOrder}
-                  onClick={() => handleSort("expiration")}
                 >
                   Expiration Date
                 </TableSortLabel>
               </TableCell>
               <TableCell>
                 <TableSortLabel
-                  active={sortField === "stock"}
+                  active={false}
                   direction={sortOrder}
-                  onClick={() => handleSort("stock")}
                 >
                   Stock
                 </TableSortLabel>

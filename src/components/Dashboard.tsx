@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Container, Typography, Pagination, SelectChangeEvent } from '@mui/material';
+import { Box, Button, Container, Typography, Pagination, Select, MenuItem, SelectChangeEvent } from '@mui/material';
 import SearchFilters from './SearchFilters';
 import ProductDialog from './ProductDialog';
 import InventoryTable from './InventoryTable';
@@ -36,14 +36,15 @@ const Dashboard: React.FC = () => {
     availability: "",
   });
   const [paginatedData, setPaginatedData] = useState<Product[]>([]);
-  const [sortField, setSortField] = useState<keyof Product>("category");
   const [sortOrder, setSortOrder] = useState<SortOrder>("asc");
+  const [primarySortField, setPrimarySortField] = useState<keyof Product | "">("");
+  const [secondarySortField, setSecondarySortField] = useState<keyof Product | "">("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
   useEffect(() => {
     applySortingAndPagination();
-  }, [inventoryData, currentPage, sortField, sortOrder]);
+  }, [inventoryData, currentPage, primarySortField, secondarySortField, sortOrder]);
 
   const applySortingAndPagination = () => {
     let filteredData = inventoryData;
@@ -66,13 +67,10 @@ const Dashboard: React.FC = () => {
     }
 
     const sortedData = [...filteredData].sort((a, b) => {
-      if (typeof a[sortField] === 'string' && typeof b[sortField] === 'string') {
-        if (a[sortField] < b[sortField]) return sortOrder === "asc" ? -1 : 1;
-        if (a[sortField] > b[sortField]) return sortOrder === "asc" ? 1 : -1;
-      } else if (typeof a[sortField] === 'number' && typeof b[sortField] === 'number') {
-        return sortOrder === "asc" ? a[sortField] - b[sortField] : b[sortField] - a[sortField];
-      }
-
+      if (primarySortField && a[primarySortField] < b[primarySortField]) return sortOrder === "asc" ? -1 : 1;
+      if (primarySortField && a[primarySortField] > b[primarySortField]) return sortOrder === "asc" ? 1 : -1;
+      if (secondarySortField && a[secondarySortField] < b[secondarySortField]) return sortOrder === "asc" ? -1 : 1;
+      if (secondarySortField && a[secondarySortField] > b[secondarySortField]) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
 
@@ -141,16 +139,6 @@ const Dashboard: React.FC = () => {
     setSearchFilters({ name: "", category: "", availability: "" });
     setCurrentPage(1);
     setPaginatedData(inventoryData.slice(0, itemsPerPage));
-  };
-
-  const handleSort = (field: keyof Product) => {
-    if (field === sortField) {
-      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortOrder("asc");
-    }
-    applySortingAndPagination();
   };
 
   const handlePageChange = (
@@ -239,6 +227,21 @@ const Dashboard: React.FC = () => {
     });
   };
 
+  const handlePrimarySortChange = (event: SelectChangeEvent<keyof Product | "">) => {
+    setPrimarySortField(event.target.value as keyof Product);
+    applySortingAndPagination();
+  };
+
+  const handleSecondarySortChange = (event: SelectChangeEvent<keyof Product | "">) => {
+    setSecondarySortField(event.target.value as keyof Product);
+    applySortingAndPagination();
+  };
+
+  const handleSortOrderChange = (event: SelectChangeEvent<SortOrder>) => {
+    setSortOrder(event.target.value as SortOrder);
+    applySortingAndPagination();
+  };
+
   return (
     <Box
       sx={{
@@ -277,6 +280,47 @@ const Dashboard: React.FC = () => {
           handleClearSearch={handleClearSearch}
         />
 
+        <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center', mb: 2 }}>
+          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>Sort By:</Typography>
+          <Select
+            value={primarySortField}
+            onChange={handlePrimarySortChange}
+            displayEmpty
+            sx={{ mr: 4, color: 'text.secondary' }}
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            <MenuItem value="category">Category</MenuItem>
+            <MenuItem value="name">Name</MenuItem>
+            <MenuItem value="price">Price</MenuItem>
+            <MenuItem value="expiration">Expiration Date</MenuItem>
+            <MenuItem value="stock">Stock</MenuItem>
+          </Select>
+          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>And:</Typography>
+          <Select
+            value={secondarySortField}
+            onChange={handleSecondarySortChange}
+            displayEmpty
+            sx={{ mr: 4, color: 'text.secondary' }}
+          >
+            <MenuItem value=""><em>None</em></MenuItem>
+            <MenuItem value="category">Category</MenuItem>
+            <MenuItem value="name">Name</MenuItem>
+            <MenuItem value="price">Price</MenuItem>
+            <MenuItem value="expiration">Expiration Date</MenuItem>
+            <MenuItem value="stock">Stock</MenuItem>
+          </Select>
+          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>Order:</Typography>
+          <Select
+            value={sortOrder}
+            onChange={handleSortOrderChange}
+            displayEmpty
+            sx={{ mr: 4, color: 'text.secondary' }}
+          >
+            <MenuItem value="asc">Ascending</MenuItem>
+            <MenuItem value="desc">Descending</MenuItem>
+          </Select>
+        </Box>
+
         <Button
           variant="contained"
           sx={{ mb: 2, backgroundColor: "green", fontWeight: "bold" }}
@@ -296,9 +340,7 @@ const Dashboard: React.FC = () => {
 
         <InventoryTable
           paginatedData={paginatedData}
-          sortField={sortField}
           sortOrder={sortOrder}
-          handleSort={handleSort}
           handleCheckboxChange={handleCheckboxChange}
           handleEdit={handleEdit}
           handleDelete={handleDelete}
