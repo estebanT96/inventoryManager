@@ -273,61 +273,63 @@ const Dashboard: React.FC = () => {
           Inventory Dashboard
         </Typography>
 
-        <SearchFilters
-          searchFilters={searchFilters}
-          updateSearchFilters={updateSearchFilters}
-          handleSearch={handleSearch}
-          handleClearSearch={handleClearSearch}
-        />
+        <Box sx={{ position: 'sticky', top: 0, zIndex: 1, bgcolor: '#fff', pb: 1, borderBottom: '1px solid #ccc' }}>
+          <SearchFilters
+            searchFilters={searchFilters}
+            updateSearchFilters={updateSearchFilters}
+            handleSearch={handleSearch}
+            handleClearSearch={handleClearSearch}
+          />
 
-        <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center', mb: 2 }}>
-          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>Sort By:</Typography>
-          <Select
-            value={primarySortField}
-            onChange={handlePrimarySortChange}
-            displayEmpty
-            sx={{ mr: 4, color: 'text.secondary' }}
+          <Box sx={{ display: 'flex', justifyContent: 'start', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>Sort By:</Typography>
+            <Select
+              value={primarySortField}
+              onChange={handlePrimarySortChange}
+              displayEmpty
+              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value="category">Category</MenuItem>
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="price">Price</MenuItem>
+              <MenuItem value="expiration">Expiration Date</MenuItem>
+              <MenuItem value="stock">Stock</MenuItem>
+            </Select>
+            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>And:</Typography>
+            <Select
+              value={secondarySortField}
+              onChange={handleSecondarySortChange}
+              displayEmpty
+              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+            >
+              <MenuItem value=""><em>None</em></MenuItem>
+              <MenuItem value="category">Category</MenuItem>
+              <MenuItem value="name">Name</MenuItem>
+              <MenuItem value="price">Price</MenuItem>
+              <MenuItem value="expiration">Expiration Date</MenuItem>
+              <MenuItem value="stock">Stock</MenuItem>
+            </Select>
+            <Typography variant="subtitle2" sx={{ mr: 2, color: 'text.secondary' }}>Order:</Typography>
+            <Select
+              value={sortOrder}
+              onChange={handleSortOrderChange}
+              displayEmpty
+              sx={{ mr: 3, color: 'text.secondary', fontSize: '0.875rem' }}
+            >
+              <MenuItem value="asc">Ascending</MenuItem>
+              <MenuItem value="desc">Descending</MenuItem>
+            </Select>
+          </Box>
+
+          <Button
+            variant="contained"
+            sx={{ mb: 1, backgroundColor: "green", fontWeight: "bold", fontSize: '0.875rem' }}
+            onClick={handleOpen}
           >
-            <MenuItem value=""><em>None</em></MenuItem>
-            <MenuItem value="category">Category</MenuItem>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="price">Price</MenuItem>
-            <MenuItem value="expiration">Expiration Date</MenuItem>
-            <MenuItem value="stock">Stock</MenuItem>
-          </Select>
-          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>And:</Typography>
-          <Select
-            value={secondarySortField}
-            onChange={handleSecondarySortChange}
-            displayEmpty
-            sx={{ mr: 4, color: 'text.secondary' }}
-          >
-            <MenuItem value=""><em>None</em></MenuItem>
-            <MenuItem value="category">Category</MenuItem>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="price">Price</MenuItem>
-            <MenuItem value="expiration">Expiration Date</MenuItem>
-            <MenuItem value="stock">Stock</MenuItem>
-          </Select>
-          <Typography variant="subtitle1" sx={{ mr: 2, color: 'text.secondary' }}>Order:</Typography>
-          <Select
-            value={sortOrder}
-            onChange={handleSortOrderChange}
-            displayEmpty
-            sx={{ mr: 4, color: 'text.secondary' }}
-          >
-            <MenuItem value="asc">Ascending</MenuItem>
-            <MenuItem value="desc">Descending</MenuItem>
-          </Select>
+            New Product
+          </Button>
         </Box>
-
-        <Button
-          variant="contained"
-          sx={{ mb: 2, backgroundColor: "green", fontWeight: "bold" }}
-          onClick={handleOpen}
-        >
-          New Product
-        </Button>
 
         <ProductDialog
           open={open}
