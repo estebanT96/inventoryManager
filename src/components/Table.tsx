@@ -21,7 +21,6 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import useStore from "../store";
 import { differenceInDays, parseISO } from "date-fns";
 import SearchFilters from './searchFilters';
-import { colors } from "@mui/material";
 
 export default function BasicTable() {
   const { products, searchFilters, toggleChecked, addProduct, editProduct, deleteProduct } = useStore();
