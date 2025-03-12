@@ -21,6 +21,7 @@ import { SelectChangeEvent } from "@mui/material/Select";
 import useStore from "../store";
 import { differenceInDays, parseISO } from "date-fns";
 import SearchFilters from './searchFilters';
+import { colors } from "@mui/material";
 
 export default function BasicTable() {
   const { products, searchFilters, toggleChecked, addProduct, editProduct, deleteProduct } = useStore();
@@ -220,7 +221,7 @@ export default function BasicTable() {
   };
 
   const getStockCellColor = (stock: number) => {
-    if (stock < 5) return "rgb(255, 0, 0)"; // Red
+    if (stock < 5) return "rgb(248, 54, 54)"; // Red
     if (stock >= 5 && stock <= 10) return "rgb(241, 162, 43)"; // Yellow
     return "transparent"; // Green
   };
@@ -414,7 +415,7 @@ export default function BasicTable() {
           <Button
             variant="contained"
             onClick={handleDelete}
-            color="primary"
+            color="error"
             sx={{ fontSize: "1rem", marginRight: 2 }}
           >
             Delete
@@ -527,10 +528,12 @@ export default function BasicTable() {
         {product.stock}
       </TableCell>
       <TableCell align="left" sx={{ borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem' }}>
-        <Button variant="contained" color="primary" onClick={() => handleEditOpen(product)} sx={{ marginRight: 1, bgcolor: 'rgba(24, 190, 41, 0.9)' }}>
+        <Button  variant="contained" color="primary" onClick={() => handleEditOpen(product)} sx={{ marginRight: 1, bgcolor: 'rgba(24, 190, 41, 0.9)', color: "white", '&:hover': {
+      bgcolor: 'rgba(24, 190, 41, 0.7)', // Slightly darker on hover
+    }, }}>
           Edit
         </Button>
-        <Button variant="contained" color="secondary" onClick={() => handleDeleteOpen(product)}>
+        <Button sx={{ color: "black"}}variant="contained" color="error" onClick={() => handleDeleteOpen(product)}>
           Delete
         </Button>
       </TableCell>
