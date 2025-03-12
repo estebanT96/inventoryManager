@@ -48,7 +48,7 @@ const SearchFilters = () => {
         <InputLabel>Category</InputLabel>
         <Select
           label="Category"
-          name="category" // Ensure the name attribute is set
+          inputProps={{ name: 'category' }} // Ensure the name attribute is set
           value={localFilters.category}
           onChange={handleSelectChange}
         >
@@ -62,7 +62,7 @@ const SearchFilters = () => {
         <InputLabel>Availability</InputLabel>
         <Select
           label="Availability"
-          name="availability" // Ensure the name attribute is set
+          inputProps={{ name: 'availability' }} // Ensure the name attribute is set
           value={localFilters.availability}
           onChange={handleSelectChange}
         >
