@@ -1,18 +1,14 @@
-import Dashboard from "./components/Dashboard";
-import {Box} from "@mui/material";
+import { AppProvider } from "@toolpad/core/AppProvider";
+import Dashboard from "./pages/Dashboard";
+import Box from '@mui/material/Box';
 
-function App () {
+function App() {
   return (
-    <Box
-    sx = {{
-      display: "flex",
-      justifyContent: "center",
-      width: "100vw",
-      bgcolor: "f5f5f5"
-    }}
-    >
-      <Dashboard/>
-    </Box>
+    <AppProvider>
+      <Box sx={{ bgcolor: '#212a33', minHeight: '100vh' }}>
+        <Dashboard />
+      </Box>
+    </AppProvider>
   );
 }
 
