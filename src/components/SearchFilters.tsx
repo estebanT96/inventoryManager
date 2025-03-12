@@ -35,7 +35,12 @@ const SearchFilters = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+    
+    <Box sx={{ display: 'flex', flexDirection: 'column', mb: 2 }}>
+      <Box sx={{ mb: 1 }}>
+      Search products
+      </Box>
+      <Box sx={{ display: 'flex', gap: 2 }}>
       <TextField
         label="Product Name"
         name="name"
@@ -77,6 +82,7 @@ const SearchFilters = () => {
       <Button variant="contained" color="secondary" onClick={handleClear}>
         Clear
       </Button>
+      </Box>
     </Box>
   );
 };
