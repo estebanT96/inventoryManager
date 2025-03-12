@@ -26,57 +26,90 @@ import { differenceInDays, parseISO } from "date-fns";
 import SearchFilters from "./SearchFilters";
 
 export default function BasicTable() {
-  const { products, searchFilters, toggleChecked, addProduct, editProduct, deleteProduct } = useStore();
+  const {
+    products,
+    searchFilters,
+    toggleChecked,
+    addProduct,
+    editProduct,
+    deleteProduct,
+  } = useStore();
   const [filteredProducts, setFilteredProducts] = useState(products);
-  const [sortCriteria, setSortCriteria] = useState(''); // Default sorting by none
-  const [secondarySortCriteria, setSecondarySortCriteria] = useState(''); // Default secondary sorting by none
-  const [sortOrder, setSortOrder] = useState('asc'); // Default sorting order ascending
+  const [sortCriteria, setSortCriteria] = useState(""); // Default sorting by none
+  const [secondarySortCriteria, setSecondarySortCriteria] = useState(""); // Default secondary sorting by none
+  const [sortOrder, setSortOrder] = useState("asc"); // Default sorting order ascending
 
-  // Add the useEffect hook
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10); // Default: 10 rows per page
 
   useEffect(() => {
     const filtered = products.filter((product) => {
-      const matchesName = product.name.toLowerCase().includes(searchFilters.name.toLowerCase());
-      const matchesCategory = searchFilters.category ? product.category === searchFilters.category : true;
-      const matchesAvailability = searchFilters.availability === 'Available' ? product.stock > 0 : searchFilters.availability === 'Out of Stock' ? product.stock === 0 : true;
+      const matchesName = product.name
+        .toLowerCase()
+        .includes(searchFilters.name.toLowerCase());
+      const matchesCategory = searchFilters.category
+        ? product.category === searchFilters.category
+        : true;
+      const matchesAvailability =
+        searchFilters.availability === "Available"
+          ? product.stock > 0
+          : searchFilters.availability === "Out of Stock"
+            ? product.stock === 0
+            : true;
       return matchesName && matchesCategory && matchesAvailability;
     });
 
     const sorted = filtered.sort((a, b) => {
       let comparison = 0;
       if (sortCriteria) {
-        if (sortCriteria === 'category') {
+        if (sortCriteria === "category") {
           comparison = a.category.localeCompare(b.category);
-        } else if (sortCriteria === 'name') {
+        } else if (sortCriteria === "name") {
           comparison = a.name.localeCompare(b.name);
-        } else if (sortCriteria === 'price') {
+        } else if (sortCriteria === "price") {
           comparison = a.price - b.price;
-        } else if (sortCriteria === 'expiration') {
-          comparison = new Date(a.expiration).getTime() - new Date(b.expiration).getTime();
-        } else if (sortCriteria === 'stock') {
+        } else if (sortCriteria === "expiration") {
+          comparison =
+            new Date(a.expiration).getTime() - new Date(b.expiration).getTime();
+        } else if (sortCriteria === "stock") {
           comparison = a.stock - b.stock;
         }
       }
 
       if (comparison === 0 && secondarySortCriteria) {
-        if (secondarySortCriteria === 'category') {
+        if (secondarySortCriteria === "category") {
           comparison = a.category.localeCompare(b.category);
-        } else if (secondarySortCriteria === 'name') {
+        } else if (secondarySortCriteria === "name") {
           comparison = a.name.localeCompare(b.name);
-        } else if (secondarySortCriteria === 'price') {
+        } else if (secondarySortCriteria === "price") {
           comparison = a.price - b.price;
-        } else if (secondarySortCriteria === 'expiration') {
-          comparison = new Date(a.expiration).getTime() - new Date(b.expiration).getTime();
-        } else if (secondarySortCriteria === 'stock') {
+        } else if (secondarySortCriteria === "expiration") {
+          comparison =
+            new Date(a.expiration).getTime() - new Date(b.expiration).getTime();
+        } else if (secondarySortCriteria === "stock") {
           comparison = a.stock - b.stock;
         }
       }
 
-      return sortOrder === 'asc' ? comparison : -comparison;
+      return sortOrder === "asc" ? comparison : -comparison;
     });
 
     setFilteredProducts(sorted);
-  }, [products, searchFilters, sortCriteria, secondarySortCriteria, sortOrder]);
+
+    // Ensure the page remains valid after filtering and sorting
+    const maxPage = Math.max(0, Math.ceil(sorted.length / rowsPerPage) - 1);
+    if (page > maxPage) {
+      setPage(maxPage);
+    }
+  }, [
+    products,
+    searchFilters,
+    sortCriteria,
+    secondarySortCriteria,
+    sortOrder,
+    rowsPerPage,
+    page,
+  ]);
 
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -97,9 +130,6 @@ export default function BasicTable() {
     stock: "",
     expiration: "",
   });
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-
   const handleOpen = () => {
     setOpen(true);
   };
@@ -266,8 +296,8 @@ export default function BasicTable() {
     <>
       <SearchFilters />
 
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <FormControl variant="outlined" sx={{ width: '200px' }}>
+      <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+        <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>Sort By</InputLabel>
           <Select
             label="Sort By"
@@ -284,7 +314,7 @@ export default function BasicTable() {
             <MenuItem value="stock">Stock</MenuItem>
           </Select>
         </FormControl>
-        <FormControl variant="outlined" sx={{ width: '200px' }}>
+        <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>And</InputLabel>
           <Select
             label="And"
@@ -301,7 +331,7 @@ export default function BasicTable() {
             <MenuItem value="stock">Stock</MenuItem>
           </Select>
         </FormControl>
-        <FormControl variant="outlined" sx={{ width: '200px' }}>
+        <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>Order</InputLabel>
           <Select
             label="Order"
@@ -506,6 +536,7 @@ export default function BasicTable() {
           </Button>
         </DialogActions>
       </Dialog>
+
       <TableContainer component={Paper} sx={{ margin: "auto" }}>
         <Table
           sx={{ minWidth: 600, bgcolor: "rgba(130, 150, 170, .5)" }}
@@ -654,7 +685,10 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {product.price}
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "USD",
+                    }).format(product.price)}
                   </TableCell>
                   <TableCell
                     align="left"
