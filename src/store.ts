@@ -12,6 +12,15 @@ interface Product {
 
 interface StoreState {
   products: Product[];
+  searchFilters: {
+    name: string;
+    category: string;
+    availability: string;
+  };
+  isSearchTriggered: boolean;
+  setSearchFilters: (filters: Partial<StoreState['searchFilters']>) => void;
+  clearSearchFilters: () => void;
+  toggleSearchTriggered: () => void;
   toggleChecked: (id: number) => void;
   addProduct: (product: Omit<Product, 'id' | 'checked'>) => void;
   editProduct: (id: number, updatedProduct: Omit<Product, 'id' | 'checked'>) => void;
@@ -37,30 +46,63 @@ const useStore = create<StoreState>((set, get) => ({
     { id: 12, name: 'Cupcake', category: 'Electronics', price: 305, expiration: '', stock: 3, checked: false },
     { id: 13, name: 'Gingerbread', category: 'Electronics', price: 356, expiration: '', stock: 16, checked: false },
   ],
+  searchFilters: {
+    name: '',
+    category: '',
+    availability: '',
+  },
+
+  isSearchTriggered: false,
+  setSearchFilters: (filters) => set((state) => ({
+    searchFilters: { ...state.searchFilters, ...filters },
+  })),
+  
+  clearSearchFilters: () => set(() => ({
+    searchFilters: {
+      name: '',
+      category: '',
+      availability: '',
+    },
+    isSearchTriggered: false,
+  })),
+
+  toggleSearchTriggered: () => set((state) => ({
+    isSearchTriggered: !state.isSearchTriggered, // Still a boolean, but will always trigger an update
+  })),
+  
+
   toggleChecked: (id) => set((state) => ({
     products: state.products.map((product) =>
-      product.id === id ? { ...product, checked: !product.checked, stock: product.checked ? 10 : 0 } : product
+      product.id === id
+        ? { ...product, checked: !product.checked, stock: product.checked ? 10 : 0 }
+        : product
     ),
   })),
+
   addProduct: (product) => set((state) => ({
     products: [...state.products, { ...product, id: Date.now(), checked: false }],
   })),
+
   editProduct: (id, updatedProduct) => set((state) => ({
     products: state.products.map((product) =>
       product.id === id ? { ...product, ...updatedProduct } : product
     ),
   })),
+
   deleteProduct: (id) => set((state) => ({
     products: state.products.filter((product) => product.id !== id),
   })),
+
   getTotalProductsInStock: (category) => {
     const products = get().products.filter(product => category === 'Overall' || product.category === category);
     return products.reduce((total, product) => total + product.stock, 0);
   },
+
   getTotalValueInStock: (category) => {
     const products = get().products.filter(product => category === 'Overall' || product.category === category);
     return products.reduce((total, product) => total + (product.price * product.stock), 0);
   },
+
   getAveragePriceInStock: (category) => {
     const products = get().products.filter(product => category === 'Overall' || product.category === category);
     const totalValue = products.reduce((total, product) => total + (product.price * product.stock), 0);

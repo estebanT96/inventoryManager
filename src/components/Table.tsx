@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -20,11 +20,27 @@ import TablePagination from "@mui/material/TablePagination";
 import { SelectChangeEvent } from "@mui/material/Select";
 import useStore from "../store";
 import { differenceInDays, parseISO } from "date-fns";
-import { colors } from "@mui/material";
+import SearchFilters from './searchFilters';
 
 export default function BasicTable() {
-  const { products, toggleChecked, addProduct, editProduct, deleteProduct } =
-    useStore();
+  const { products, searchFilters, toggleChecked, addProduct, editProduct, deleteProduct } = useStore();
+  const [filteredProducts, setFilteredProducts] = useState(products);
+
+  // Add the useEffect hook
+  useEffect(() => {
+    setFilteredProducts(
+      products.filter((product) => {
+        const matchesName = product.name.toLowerCase().includes(searchFilters.name.toLowerCase());
+        const matchesCategory = searchFilters.category ? product.category === searchFilters.category : true;
+        const matchesAvailability = searchFilters.availability === 'Available' ? product.stock > 0 : searchFilters.availability === 'Out of Stock' ? product.stock === 0 : true;
+        return matchesName && matchesCategory && matchesAvailability;
+      })
+    );
+  }, [products, searchFilters]); // ✅ Now correctly updates
+  // ✅ Reacts to changes in filters
+  
+
+
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -211,6 +227,7 @@ export default function BasicTable() {
 
   return (
     <>
+      <SearchFilters />
       <Button
         variant="contained"
         color="warning"
@@ -484,143 +501,42 @@ export default function BasicTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((product) => (
-                <TableRow
-                  key={product.id}
-                  sx={{
-                    textDecoration: product.checked ? "line-through" : "none",
-                    fontSize: "1rem",
-                  }}
-                >
-                  <TableCell
-                    align="left"
-                    sx={{
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      fontSize: "1.2rem",
-                    }}
-                  >
-                    <Checkbox
-                      checked={product.checked}
-                      onChange={() => toggleChecked(product.id)}
-                      aria-label="controlled"
-                    />
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    component="th"
-                    scope="row"
-                    sx={{
-                      backgroundColor:
-                        product.category === "Food"
-                          ? getExpirationColor(product.expiration)
-                          : "transparent",
-                      color: "white",
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      fontSize: "1rem",
-                      textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)", // Text shading for contrast
-                    }}
-                  >
-                    {product.category}
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    sx={{
-                      backgroundColor:
-                        product.category === "Food"
-                          ? getExpirationColor(product.expiration)
-                          : "transparent",
-                      color: "white",
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      fontSize: "1rem",
-                      textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)", // Text shading for contrast
-                    }}
-                  >
-                    {product.name}
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    sx={{
-                      backgroundColor:
-                        product.category === "Food"
-                          ? getExpirationColor(product.expiration)
-                          : "transparent",
-                      color: "white",
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      fontSize: "1rem",
-                      textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)", // Text shading for contrast
-                    }}
-                  >
-                    {product.price}
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    sx={{
-                      backgroundColor:
-                        product.category === "Food"
-                          ? getExpirationColor(product.expiration)
-                          : "transparent",
-                      color: "white",
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      fontSize: "1rem",
-                      textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)", // Text shading for contrast
-                    }}
-                  >
-                    {product.expiration}{" "}
-                    {product.category === "Food" && (
-                      <Typography
-                        variant="body2"
-                        component="span"
-                        sx={{
-                          fontStyle: "italic",
-                          fontSize: "0.8rem",
-                          color: "rgb(37, 20, 20)",
-                        }}
-                      >
-                        {getDaysLeftText(product.expiration)}
-                      </Typography>
-                    )}
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    sx={{
-                      backgroundColor: getStockCellColor(product.stock), // Background color based on stock
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)",
-                      borderLeft: "2px solid rgba(130, 150, 170, .5)", // Left border
-                      borderRight: "2px solid rgba(130, 150, 170, .5)", // Right border
-                      fontSize: "1rem",
-                      textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)", // Text shading for contrast
-                    }}
-                  >
-                    {product.stock}
-                  </TableCell>
-                  <TableCell
-                    align="left"
-                    sx={{
-                      borderBottom: "2px solid rgba(130, 150, 170, .5)", // No background color for actions column
-                      fontSize: "1rem",
-                    }}
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() => handleEditOpen(product)}
-                      sx={{ marginRight: 1, bgcolor: "rgba(24, 190, 41, 0.9)" }}
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      onClick={() => handleDeleteOpen(product)}
-                    >
-                      Delete
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-          </TableBody>
+  {filteredProducts.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((product) => (
+    <TableRow key={product.id} sx={{ textDecoration: product.checked ? 'line-through' : 'none', fontSize: '1rem' }}>
+      <TableCell align="left" sx={{ borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1.2rem' }}>
+        <Checkbox checked={product.checked} onChange={() => toggleChecked(product.id)} aria-label="controlled" />
+      </TableCell>
+      <TableCell align="left" component="th" scope="row" sx={{ backgroundColor: product.category === 'Food' ? getExpirationColor(product.expiration) : 'transparent', color: 'white', borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' }}>
+        {product.category}
+      </TableCell>
+      <TableCell align="left" sx={{ backgroundColor: product.category === 'Food' ? getExpirationColor(product.expiration) : 'transparent', color: 'white', borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' }}>
+        {product.name}
+      </TableCell>
+      <TableCell align="left" sx={{ backgroundColor: product.category === 'Food' ? getExpirationColor(product.expiration) : 'transparent', color: 'white', borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' }}>
+        {product.price}
+      </TableCell>
+      <TableCell align="left" sx={{ backgroundColor: product.category === 'Food' ? getExpirationColor(product.expiration) : 'transparent', color: 'white', borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' }}>
+        {product.expiration}{" "}
+        {product.category === 'Food' && (
+          <Typography variant="body2" component="span" sx={{ fontStyle: 'italic', fontSize: '0.8rem', color: 'rgb(37, 20, 20)' }}>
+            {getDaysLeftText(product.expiration)}
+          </Typography>
+        )}
+      </TableCell>
+      <TableCell align="left" sx={{ backgroundColor: getStockCellColor(product.stock), borderBottom: '2px solid rgba(130, 150, 170, .5)', borderLeft: '2px solid rgba(130, 150, 170, .5)', borderRight: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem', textShadow: '1px 1px 2px rgba(0, 0, 0, 0.8)' }}>
+        {product.stock}
+      </TableCell>
+      <TableCell align="left" sx={{ borderBottom: '2px solid rgba(130, 150, 170, .5)', fontSize: '1rem' }}>
+        <Button variant="contained" color="primary" onClick={() => handleEditOpen(product)} sx={{ marginRight: 1, bgcolor: 'rgba(24, 190, 41, 0.9)' }}>
+          Edit
+        </Button>
+        <Button variant="contained" color="secondary" onClick={() => handleDeleteOpen(product)}>
+          Delete
+        </Button>
+      </TableCell>
+    </TableRow>
+  ))}
+</TableBody>
         </Table>
         <TablePagination
           sx={{
