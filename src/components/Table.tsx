@@ -300,7 +300,7 @@ export default function BasicTable() {
       <SearchFilters />
 
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <FormControl variant="outlined" sx={{ width: "200px" }} disabled={!sortCriteria}>
+        <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>Sort By</InputLabel>
           <Select
             label="Sort By"
@@ -318,31 +318,35 @@ export default function BasicTable() {
           </Select>
         </FormControl>
 
-        <FormControl variant="outlined" sx={{ width: "200px" }}>
-          <InputLabel>And</InputLabel>
-          <Select
-            label="And"
-            value={secondarySortCriteria}
-            onChange={(e) => setSecondarySortCriteria(e.target.value)}
-            sx={{
-              "&.Mui-disabled": {
-                borderColor: "transparent", // Remove white border effect when hovering
-                color: "rgba(0, 0, 0, 0.38)", // Match MUI's disabled color
-              },
-            }}
-          >
-            <MenuItem value="">
-              <em>None</em>
-            </MenuItem>
-            {["category", "name", "price", "expiration", "stock"]
-              .filter((option) => option !== sortCriteria) // Prevent duplicate sorting criteria
-              .map((option) => (
-                <MenuItem key={option} value={option}>
-                  {option.charAt(0).toUpperCase() + option.slice(1)}
-                </MenuItem>
-              ))}
-          </Select>
-        </FormControl>
+        <FormControl
+  variant="outlined"
+  sx={{ width: "200px" }}
+  disabled={!sortCriteria} // Disable if "Sort By" has no selection
+>
+  <InputLabel>And</InputLabel>
+  <Select
+    label="And"
+    value={secondarySortCriteria}
+    onChange={(e) => setSecondarySortCriteria(e.target.value)}
+    sx={{
+      "&.Mui-disabled": {
+        borderColor: "transparent", // Remove white border effect when hovering
+        color: "rgba(0, 0, 0, 0.38)", // Match MUI's disabled color
+      },
+    }}
+  >
+    <MenuItem value="">
+      <em>None</em>
+    </MenuItem>
+    {["category", "name", "price", "expiration", "stock"]
+      .filter((option) => option !== sortCriteria) // Prevent duplicate sorting criteria
+      .map((option) => (
+        <MenuItem key={option} value={option}>
+          {option.charAt(0).toUpperCase() + option.slice(1)}
+        </MenuItem>
+      ))}
+  </Select>
+</FormControl>
 
         <FormControl
           variant="outlined"
