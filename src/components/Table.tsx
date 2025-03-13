@@ -269,12 +269,15 @@ export default function BasicTable() {
     !newProduct.stock ||
     (newProduct.category === "Food" && !newProduct.expiration);
 
-  const getExpirationColor = (expiration: string) => {
+  const getExpirationColor = (expiration: string, stock: number) => {
+    if (stock === 0) return "transparent"; // Remove background color if stock is 0
     if (!expiration) return "transparent"; // No background color for no expiration date
+
     const daysUntilExpiration = differenceInDays(
       parseISO(expiration),
       new Date()
     );
+
     if (daysUntilExpiration < 7) return "rgba(235, 21, 21, 0.9)"; // Red for less than 1 week
     if (daysUntilExpiration <= 14) return "rgba(235, 235, 35, 0.86)"; // Yellow for 1-2 weeks
     return "rgb(29, 174, 29)"; // Green for more than 2 weeks
@@ -287,7 +290,7 @@ export default function BasicTable() {
   };
 
   const getStockCellColor = (stock: number) => {
-    if (stock < 5) return "rgb(248, 54, 54)"; // Red
+    if (stock >= 1 && stock <= 5) return "rgb(248, 54, 54)"; // Red
     if (stock >= 5 && stock <= 10) return "rgb(241, 162, 43)"; // Yellow
     return "transparent"; // Green
   };
@@ -297,7 +300,7 @@ export default function BasicTable() {
       <SearchFilters />
 
       <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-        <FormControl variant="outlined" sx={{ width: "200px" }}>
+        <FormControl variant="outlined" sx={{ width: "200px" }} disabled={!sortCriteria}>
           <InputLabel>Sort By</InputLabel>
           <Select
             label="Sort By"
@@ -314,24 +317,38 @@ export default function BasicTable() {
             <MenuItem value="stock">Stock</MenuItem>
           </Select>
         </FormControl>
+
         <FormControl variant="outlined" sx={{ width: "200px" }}>
           <InputLabel>And</InputLabel>
           <Select
             label="And"
             value={secondarySortCriteria}
             onChange={(e) => setSecondarySortCriteria(e.target.value)}
+            sx={{
+              "&.Mui-disabled": {
+                borderColor: "transparent", // Remove white border effect when hovering
+                color: "rgba(0, 0, 0, 0.38)", // Match MUI's disabled color
+              },
+            }}
           >
             <MenuItem value="">
               <em>None</em>
             </MenuItem>
-            <MenuItem value="category">Category</MenuItem>
-            <MenuItem value="name">Name</MenuItem>
-            <MenuItem value="price">Price</MenuItem>
-            <MenuItem value="expiration">Expiration Date</MenuItem>
-            <MenuItem value="stock">Stock</MenuItem>
+            {["category", "name", "price", "expiration", "stock"]
+              .filter((option) => option !== sortCriteria) // Prevent duplicate sorting criteria
+              .map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </MenuItem>
+              ))}
           </Select>
         </FormControl>
-        <FormControl variant="outlined" sx={{ width: "200px" }}>
+
+        <FormControl
+          variant="outlined"
+          sx={{ width: "200px" }}
+          disabled={!sortCriteria}
+        >
           <InputLabel>Order</InputLabel>
           <Select
             label="Order"
@@ -640,6 +657,7 @@ export default function BasicTable() {
                       aria-label="controlled"
                     />
                   </TableCell>
+
                   <TableCell
                     align="left"
                     component="th"
@@ -647,7 +665,10 @@ export default function BasicTable() {
                     sx={{
                       backgroundColor:
                         product.category === "Food"
-                          ? getExpirationColor(product.expiration)
+                          ? getExpirationColor(
+                              product.expiration,
+                              product.stock
+                            )
                           : "transparent",
                       color: "white",
                       borderBottom: "2px solid rgba(130, 150, 170, .5)",
@@ -662,7 +683,10 @@ export default function BasicTable() {
                     sx={{
                       backgroundColor:
                         product.category === "Food"
-                          ? getExpirationColor(product.expiration)
+                          ? getExpirationColor(
+                              product.expiration,
+                              product.stock
+                            )
                           : "transparent",
                       color: "white",
                       borderBottom: "2px solid rgba(130, 150, 170, .5)",
@@ -677,7 +701,10 @@ export default function BasicTable() {
                     sx={{
                       backgroundColor:
                         product.category === "Food"
-                          ? getExpirationColor(product.expiration)
+                          ? getExpirationColor(
+                              product.expiration,
+                              product.stock
+                            )
                           : "transparent",
                       color: "white",
                       borderBottom: "2px solid rgba(130, 150, 170, .5)",
@@ -695,7 +722,10 @@ export default function BasicTable() {
                     sx={{
                       backgroundColor:
                         product.category === "Food"
-                          ? getExpirationColor(product.expiration)
+                          ? getExpirationColor(
+                              product.expiration,
+                              product.stock
+                            )
                           : "transparent",
                       color: "white",
                       borderBottom: "2px solid rgba(130, 150, 170, .5)",
@@ -710,7 +740,7 @@ export default function BasicTable() {
                         component="span"
                         sx={{
                           fontStyle: "italic",
-                          fontSize: "0.8rem",
+                          fontSize: "1rem",
                           color: "rgb(37, 20, 20)",
                         }}
                       >
