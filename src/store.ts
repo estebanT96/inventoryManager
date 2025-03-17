@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import axios from 'axios';
 
 interface Product {
   id: number;
@@ -12,18 +13,22 @@ interface Product {
 
 interface StoreState {
   products: Product[];
+  totalPages: number;
+  totalProducts: number;  // ✅ ADD THIS
+  currentPage: number;
+  fetchProducts: (page?: number, size?: number) => Promise<void>;
   searchFilters: {
     name: string;
     category: string;
     availability: string;
   };
   isSearchTriggered: boolean;
-  setSearchFilters: (filters: Partial<StoreState['searchFilters']>) => void;
+  setSearchFilters: (filters: Partial<StoreState["searchFilters"]>) => void;
   clearSearchFilters: () => void;
   toggleSearchTriggered: () => void;
   toggleChecked: (id: number) => void;
-  addProduct: (product: Omit<Product, 'id' | 'checked'>) => void;
-  editProduct: (id: number, updatedProduct: Omit<Product, 'id' | 'checked'>) => void;
+  addProduct: (product: Omit<Product, "id" | "checked">) => void;
+  editProduct: (id: number, updatedProduct: Omit<Product, "id" | "checked">) => void;
   deleteProduct: (id: number) => void;
   getTotalProductsInStock: (category: string) => number;
   getTotalValueInStock: (category: string) => number;
@@ -31,21 +36,39 @@ interface StoreState {
 }
 
 const useStore = create<StoreState>((set, get) => ({
-  products: [
-    { id: 1, name: 'TV', category: 'Electronics', price: 6000, expiration: '', stock: 6, checked: false },
-    { id: 2, name: 'Shirt', category: 'Clothing', price: 50, expiration: '', stock: 9, checked: false },
-    { id: 3, name: 'Cupcake', category: 'Food', price: 30, expiration: '2025-12-03', stock: 16, checked: false },
-    { id: 4, name: 'Pants', category: 'Clothing', price: 400, expiration: '', stock: 3, checked: false },
-    { id: 5, name: 'Gamer PC', category: 'Electronics', price: 8000, expiration: '', stock: 16, checked: false },
-    { id: 6, name: 'Ice cream sandwich', category: 'Food', price: 40, expiration: '2025-12-02', stock: 9, checked: false },
-    { id: 7, name: 'Western Pants', category: 'Clothing', price: 500, expiration: '', stock: 16, checked: false },
-    { id: 8, name: 'Torta de Tamal', category: 'Food', price: 40, expiration: '2025-12-04', stock: 3, checked: false },
-    { id: 9, name: 'Socks', category: 'Clothing', price: 60, expiration: '', stock: 16, checked: false },
-    { id: 10, name: 'Burritos de Machaca', category: 'Food', price: 20, expiration: '2025-12-02', stock: 9, checked: false },
-    { id: 11, name: 'Hat', category: 'Clothing', price: 250, expiration: '', stock: 16, checked: false },
-    { id: 12, name: 'Laptop', category: 'Electronics', price: 6000, expiration: '', stock: 3, checked: false },
-    { id: 13, name: 'Nintendo Switch', category: 'Electronics', price: 6500, expiration: '', stock: 16, checked: false },
-  ],
+  products: [],
+  totalPages: 1,
+  totalProducts: 0,
+  currentPage: 0,
+
+  fetchProducts: async (page = 0, size = 10) => {
+    try {
+      const response = await axios.get(`http://localhost:9090/inventory/products?page=${page}&size=${size}`);
+  
+      // 🔥 Ensure we extract the correct structure
+      const fetchedProducts = response.data.products.map((product: any) => ({
+        id: product.id,
+        name: product.name,
+        category: product.category,
+        price: product.unitPrice ?? null,  // Ensure default values
+        expiration: product.expirationDate ?? null,
+        stock: product.quantityInStock ?? null,  // Ensure correct stock field
+        checked: false, // Default unchecked
+      }));
+  
+      set({
+        products: fetchedProducts,  // ✅ Assign correct values from backend
+        totalPages: response.data.totalPages,
+        totalProducts: response.data.totalProducts,
+        currentPage: page,
+      });
+  
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  },
+
+
   searchFilters: {
     name: '',
     category: '',
@@ -93,20 +116,33 @@ const useStore = create<StoreState>((set, get) => ({
     products: state.products.filter((product) => product.id !== id),
   })),
 
-  getTotalProductsInStock: (category) => {
-    const products = get().products.filter(product => category === 'Overall' || product.category === category);
-    return products.reduce((total, product) => total + product.stock, 0);
+  getTotalProductsInStock: (category: string) => {
+    const products = get().products.filter(
+      (product: Product) => category === "Overall" || product.category === category
+    );
+    return products.reduce((total: number, product: Product) => total + product.stock, 0);
   },
-
-  getTotalValueInStock: (category) => {
-    const products = get().products.filter(product => category === 'Overall' || product.category === category);
-    return products.reduce((total, product) => total + (product.price * product.stock), 0);
+  
+  getTotalValueInStock: (category: string) => {
+    const products = get().products.filter(
+      (product: Product) => category === "Overall" || product.category === category
+    );
+    return products.reduce((total: number, product: Product) => total + product.price * product.stock, 0);
   },
+  
 
-  getAveragePriceInStock: (category) => {
-    const products = get().products.filter(product => category === 'Overall' || product.category === category);
-    const totalValue = products.reduce((total, product) => total + (product.price * product.stock), 0);
-    const totalStock = products.reduce((total, product) => total + product.stock, 0);
+  getAveragePriceInStock: (category: string) => {
+    const products = get().products.filter(
+      (product: Product) => category === "Overall" || product.category === category
+    );
+    const totalValue = products.reduce(
+      (total: number, product: Product) => total + product.price * product.stock,
+      0
+    );
+    const totalStock = products.reduce(
+      (total: number, product: Product) => total + product.stock,
+      0
+    );
     return totalStock ? totalValue / totalStock : 0;
   },
 }));

@@ -1,3 +1,5 @@
+Table;
+
 import React, { useState, useEffect } from "react";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
@@ -28,6 +30,7 @@ import SearchFilters from "./SearchFilters";
 export default function BasicTable() {
   const {
     products,
+    fetchProducts,
     searchFilters,
     toggleChecked,
     addProduct,
@@ -41,6 +44,13 @@ export default function BasicTable() {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10); // Default: 10 rows per page
+
+  useEffect(() => {
+    fetchProducts(); // Fetch products from backend
+
+    // Ensure table updates when products change
+    setFilteredProducts([...products]);
+  }, [products]);
 
   useEffect(() => {
     const filtered = products.filter((product) => {
@@ -160,7 +170,9 @@ export default function BasicTable() {
       category: product.category,
       price: product.price,
       stock: product.stock.toString(),
-      expiration: product.expiration,
+      expiration: product.expiration
+        ? new Date(product.expiration).toISOString().split("T")[0]
+        : "", // Convert to YYYY-MM-DD format,
       checked: product.checked,
     });
     setNewProduct({
@@ -168,7 +180,9 @@ export default function BasicTable() {
       category: product.category,
       price: product.price.toString(),
       stock: product.stock.toString(),
-      expiration: product.expiration,
+      expiration: product.expiration
+        ? new Date(product.expiration).toISOString().split("T")[0]
+        : "", // Convert to YYYY-MM-DD format,
     });
     setEditOpen(true);
   };
@@ -253,13 +267,16 @@ export default function BasicTable() {
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
+    fetchProducts(newPage, rowsPerPage); // ✅ Fetch products for the new page
   };
 
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
+    const newSize = parseInt(event.target.value, 10);
+    setRowsPerPage(newSize);
     setPage(0);
+    fetchProducts(0, newSize); // ✅ Fetch first page with new size
   };
 
   const isSaveDisabled =
@@ -319,34 +336,34 @@ export default function BasicTable() {
         </FormControl>
 
         <FormControl
-  variant="outlined"
-  sx={{ width: "200px" }}
-  disabled={!sortCriteria} // Disable if "Sort By" has no selection
->
-  <InputLabel>And</InputLabel>
-  <Select
-    label="And"
-    value={secondarySortCriteria}
-    onChange={(e) => setSecondarySortCriteria(e.target.value)}
-    sx={{
-      "&.Mui-disabled": {
-        borderColor: "transparent", // Remove white border effect when hovering
-        color: "rgba(0, 0, 0, 0.38)", // Match MUI's disabled color
-      },
-    }}
-  >
-    <MenuItem value="">
-      <em>None</em>
-    </MenuItem>
-    {["category", "name", "price", "expiration", "stock"]
-      .filter((option) => option !== sortCriteria) // Prevent duplicate sorting criteria
-      .map((option) => (
-        <MenuItem key={option} value={option}>
-          {option.charAt(0).toUpperCase() + option.slice(1)}
-        </MenuItem>
-      ))}
-  </Select>
-</FormControl>
+          variant="outlined"
+          sx={{ width: "200px" }}
+          disabled={!sortCriteria} // Disable if "Sort By" has no selection
+        >
+          <InputLabel>And</InputLabel>
+          <Select
+            label="And"
+            value={secondarySortCriteria}
+            onChange={(e) => setSecondarySortCriteria(e.target.value)}
+            sx={{
+              "&.Mui-disabled": {
+                borderColor: "transparent", // Remove white border effect when hovering
+                color: "rgba(0, 0, 0, 0.38)", // Match MUI's disabled color
+              },
+            }}
+          >
+            <MenuItem value="">
+              <em>None</em>
+            </MenuItem>
+            {["category", "name", "price", "expiration", "stock"]
+              .filter((option) => option !== sortCriteria) // Prevent duplicate sorting criteria
+              .map((option) => (
+                <MenuItem key={option} value={option}>
+                  {option.charAt(0).toUpperCase() + option.slice(1)}
+                </MenuItem>
+              ))}
+          </Select>
+        </FormControl>
 
         <FormControl
           variant="outlined"
@@ -680,8 +697,9 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {product.category}
+                    {product.category || "N/A"}
                   </TableCell>
+
                   <TableCell
                     align="left"
                     sx={{
@@ -698,8 +716,9 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {product.name}
+                    {product.name || "N/A"}
                   </TableCell>
+
                   <TableCell
                     align="left"
                     sx={{
@@ -716,11 +735,14 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {new Intl.NumberFormat("en-US", {
-                      style: "currency",
-                      currency: "USD",
-                    }).format(product.price)}
+                    {product.price != null && !isNaN(product.price)
+                      ? new Intl.NumberFormat("en-US", {
+                          style: "currency",
+                          currency: "USD",
+                        }).format(product.price)
+                      : "N/A"}
                   </TableCell>
+
                   <TableCell
                     align="left"
                     sx={{
@@ -737,14 +759,19 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {product.expiration}{" "}
-                    {product.category === "Food" && (
+                    {product.expiration
+                      ? new Date(product.expiration).toLocaleDateString(
+                          "en-US",
+                          { year: "numeric", month: "long", day: "numeric" }
+                        )
+                      : "N/A"}
+                    {product.category === "Food" && product.expiration && (
                       <Typography
                         variant="body2"
                         component="span"
                         sx={{
                           fontStyle: "italic",
-                          fontSize: "1rem",
+                          fontSize: "0.9rem",
                           color: "rgb(37, 20, 20)",
                         }}
                       >
@@ -752,6 +779,7 @@ export default function BasicTable() {
                       </Typography>
                     )}
                   </TableCell>
+
                   <TableCell
                     align="left"
                     sx={{
@@ -763,8 +791,9 @@ export default function BasicTable() {
                       textShadow: "1px 1px 2px rgba(0, 0, 0, 0.8)",
                     }}
                   >
-                    {product.stock}
+                    {product.stock != null ? product.stock : "N/A"}
                   </TableCell>
+
                   <TableCell
                     align="left"
                     sx={{
